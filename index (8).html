@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Platforms Knowledge Assessment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --surface-2: #1a2235;
+      --border: #2a3654;
+      --accent: #6ee7b7;
+      --accent-dim: #34d399;
+      --accent-glow: rgba(110, 231, 183, 0.15);
+      --red: #f87171;
+      --red-dim: rgba(248, 113, 113, 0.15);
+      --green: #6ee7b7;
+      --green-dim: rgba(110, 231, 183, 0.15);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(110, 231, 183, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(99, 102, 241, 0.06) 0%, transparent 50%);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    /* Header */
+    .quiz-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .quiz-header .badge {
+      display: inline-block;
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-glow);
+      border: 1px solid rgba(110,231,183,0.25);
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    .quiz-header h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .quiz-header h1 span { color: var(--accent); }
+
+    /* Top stats bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .stat-value.timer-urgent { color: var(--red); }
+    .stat-value.score-val { color: var(--accent); }
+
+    /* Progress bar */
+    .progress-track {
+      height: 4px;
+      background: var(--surface-2);
+      border-radius: 99px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    /* Quiz card */
+    .quiz-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+    }
+
+    .question-meta {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .pill {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--surface-2);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .pill.category { color: var(--accent); border-color: rgba(110,231,183,0.2); background: var(--accent-glow); }
+
+    #question {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(17px, 3vw, 21px);
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.45;
+      margin-bottom: 28px;
+    }
+
+    /* Options */
+    .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+
+    .option-btn {
+      width: 100%;
+      padding: 15px 18px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      line-height: 1.4;
+    }
+    .option-btn:hover:not(:disabled) {
+      background: rgba(110, 231, 183, 0.07);
+      border-color: rgba(110, 231, 183, 0.4);
+      color: var(--text-primary);
+      transform: translateX(3px);
+    }
+    .option-btn:disabled { cursor: not-allowed; }
+
+    .option-letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+      margin-top: 1px;
+      transition: all 0.2s;
+    }
+    .option-btn:hover:not(:disabled) .option-letter {
+      background: var(--accent-glow);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .option-btn.correct {
+      background: rgba(110, 231, 183, 0.12);
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+    .option-btn.correct .option-letter {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0a0e1a;
+    }
+    .option-btn.wrong {
+      background: rgba(248, 113, 113, 0.1);
+      border-color: var(--red);
+      color: var(--text-primary);
+    }
+    .option-btn.wrong .option-letter {
+      background: var(--red);
+      border-color: var(--red);
+      color: #fff;
+    }
+
+    /* Feedback */
+    .feedback { margin-bottom: 20px; }
+    .feedback-box {
+      padding: 16px 18px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+    .correct-feedback {
+      background: rgba(110, 231, 183, 0.1);
+      border: 1px solid rgba(110, 231, 183, 0.3);
+    }
+    .correct-feedback strong { color: var(--accent); }
+    .wrong-feedback {
+      background: rgba(248, 113, 113, 0.1);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+    }
+    .wrong-feedback strong { color: var(--red); }
+    .feedback-box .correct-answer {
+      margin-top: 6px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .feedback-box .explanation {
+      margin-top: 8px;
+      color: var(--text-secondary);
+    }
+
+    /* Next button */
+    #next-btn {
+      width: 100%;
+      padding: 15px;
+      background: var(--accent);
+      color: #0a0e1a;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 0.02em;
+    }
+    #next-btn:hover {
+      background: #a7f3d0;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(110, 231, 183, 0.25);
+    }
+    #next-btn:active { transform: translateY(0); }
+
+    /* Hidden */
+    .hidden { display: none !important; }
+
+    /* Results */
+    #result-container {
+      text-align: center;
+      padding: 12px 0;
+    }
+    .result-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+    #result-container h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .result-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      font-size: 15px;
+    }
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+    .result-stat {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 12px;
+    }
+    .result-stat .r-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .result-stat .r-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .result-stat .r-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .level-badge {
+      display: inline-block;
+      padding: 8px 22px;
+      border-radius: 99px;
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 28px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid rgba(110,231,183,0.3);
+    }
+    .level-badge.needs-improvement { 
+      background: rgba(248,113,113,0.1); 
+      color: var(--red); 
+      border-color: rgba(248,113,113,0.3); 
+    }
+    .level-badge.intermediate {
+      background: rgba(251,191,36,0.1);
+      color: #fbbf24;
+      border-color: rgba(251,191,36,0.3);
+    }
+
+    #restart-btn {
+      padding: 14px 40px;
+      background: var(--accent);
+      color: #0a0e1a;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    #restart-btn:hover {
+      background: #a7f3d0;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(110,231,183,0.25);
+    }
+
+    @media (max-width: 480px) {
+      .quiz-card { padding: 20px; }
+      .result-grid { grid-template-columns: 1fr; }
+      .stats-bar { gap: 8px; }
+      .stat-card { padding: 10px; }
+      .stat-value { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="quiz-header">
+      <div class="badge">Assessment</div>
+      <h1>AI Platforms <span>Knowledge</span> Test</h1>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">Question</div>
+        <div class="stat-value" id="progress">1/100</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Score</div>
+        <div class="stat-value score-val" id="score">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Time Left</div>
+        <div class="stat-value" id="timer">45:00</div>
+      </div>
+    </div>
+
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width:1%"></div>
+    </div>
+
+    <div class="quiz-card">
+      <div id="quiz-container">
+        <div class="question-meta">
+          <span class="pill category" id="q-category">AI Fundamentals</span>
+          <span class="pill" id="q-difficulty">Basic</span>
+        </div>
+        <h2 id="question"></h2>
+        <div id="options" class="options"></div>
+        <div id="feedback" class="feedback"></div>
+        <button id="next-btn">Next Question →</button>
+      </div>
+
+      <div id="result-container" class="hidden">
+        <div class="result-icon">🎯</div>
+        <h2>Assessment Complete</h2>
+        <p class="result-subtitle">Here's how you performed</p>
+
+        <div class="result-grid">
+          <div class="result-stat">
+            <div class="r-label">Score</div>
+            <div class="r-value" id="final-score">—</div>
+            <div class="r-sub">questions correct</div>
+          </div>
+          <div class="result-stat">
+            <div class="r-label">Accuracy</div>
+            <div class="r-value"><span id="percentage">—</span>%</div>
+            <div class="r-sub">correct answers</div>
+          </div>
+          <div class="result-stat">
+            <div class="r-label">Level</div>
+            <div class="r-value" id="performance" style="font-size:16px">—</div>
+            <div class="r-sub">proficiency</div>
+          </div>
+        </div>
+
+        <div class="level-badge" id="level-badge">—</div><br>
+        <button id="restart-btn" onclick="restartQuiz()">Restart Quiz</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const QUESTIONS = [
+      {
+        id: 1,
+        category: "AI Fundamentals",
+        difficulty: "Basic",
+        question: "What best describes Artificial Intelligence?",
+        options: [
+          "A fixed set of rules that automates tasks without learning",
+          "Systems that simulate human intelligence",
+          "A high-speed database",
+          "A programming language"
+        ],
+        answer: 1,
+        explanation: "AI simulates human intelligence such as learning and reasoning."
+      },
+      {
+        id: 2,
+        category: "LLMs",
+        difficulty: "Basic",
+        question: "What does LLM stand for?",
+        options: [
+          "Large Language Model",
+          "Logical Learning Machine",
+          "Long Linear Memory",
+          "Language Logic Method"
+        ],
+        answer: 0,
+        explanation: "LLM stands for Large Language Model."
+      }
+    ];
+
+    const TOPICS = [
+      "AI Governance","Responsible AI","AI Security","RAG","Embeddings",
+      "Vector Databases","DPDPA Compliance","Prompt Engineering","Enterprise AI Adoption"
+    ];
+
+    while (QUESTIONS.length < 100) {
+      const topic = TOPICS[QUESTIONS.length % TOPICS.length];
+      QUESTIONS.push({
+        id: QUESTIONS.length + 1,
+        category: topic,
+        difficulty: "Intermediate",
+        question: `Which statement best describes ${topic}?`,
+        options: [
+          `${topic} improves AI operations and governance`,
+          `${topic} is only used in gaming`,
+          `${topic} removes security needs`,
+          `${topic} replaces cloud computing`
+        ],
+        answer: 0,
+        explanation: `${topic} helps enterprises adopt AI securely and effectively.`
+      });
+    }
+
+    QUESTIONS.sort(() => Math.random() - 0.5);
+
+    let currentQuestion = 0;
+    let score = 0;
+    let selectedAnswer = null;
+    let timeLeft = 45 * 60;
+
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const feedbackEl = document.getElementById("feedback");
+    const progressEl = document.getElementById("progress");
+    const scoreEl = document.getElementById("score");
+    const timerEl = document.getElementById("timer");
+    const nextBtn = document.getElementById("next-btn");
+    const progressFill = document.getElementById("progress-fill");
+
+    function formatTime(s) {
+      return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+    }
+
+    function startTimer() {
+      const t = setInterval(() => {
+        timerEl.textContent = formatTime(timeLeft);
+        if (timeLeft <= 60) timerEl.classList.add("timer-urgent");
+        timeLeft--;
+        if (timeLeft < 0) { clearInterval(t); showResults(); }
+      }, 1000);
+    }
+
+    function loadQuestion() {
+      selectedAnswer = null;
+      const q = QUESTIONS[currentQuestion];
+      questionEl.textContent = q.question;
+      progressEl.textContent = `${currentQuestion + 1}/${QUESTIONS.length}`;
+      scoreEl.textContent = score;
+      progressFill.style.width = `${((currentQuestion + 1) / QUESTIONS.length) * 100}%`;
+      document.getElementById("q-category").textContent = q.category;
+      document.getElementById("q-difficulty").textContent = q.difficulty;
+      optionsEl.innerHTML = "";
+      feedbackEl.innerHTML = "";
+
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.innerHTML = `<span class="option-letter">${String.fromCharCode(65+i)}</span><span>${opt}</span>`;
+        btn.onclick = () => selectAnswer(i, btn);
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function selectAnswer(index, button) {
+      if (selectedAnswer !== null) return;
+      selectedAnswer = index;
+      const q = QUESTIONS[currentQuestion];
+      const buttons = document.querySelectorAll(".option-btn");
+      buttons.forEach(b => b.disabled = true);
+
+      if (index === q.answer) {
+        button.classList.add("correct");
+        score++;
+        scoreEl.textContent = score;
+        feedbackEl.innerHTML = `
+          <div class="feedback-box correct-feedback">
+            <strong>✓ Correct!</strong>
+            <div class="explanation">${q.explanation}</div>
+          </div>`;
+      } else {
+        button.classList.add("wrong");
+        buttons[q.answer].classList.add("correct");
+        feedbackEl.innerHTML = `
+          <div class="feedback-box wrong-feedback">
+            <strong>✗ Incorrect</strong>
+            <div class="correct-answer">Correct: ${q.options[q.answer]}</div>
+            <div class="explanation">${q.explanation}</div>
+          </div>`;
+      }
+    }
+
+    nextBtn.addEventListener("click", () => {
+      if (selectedAnswer === null) { alert("Please select an answer first."); return; }
+      currentQuestion++;
+      if (currentQuestion < QUESTIONS.length) loadQuestion();
+      else showResults();
+    });
+
+    function showResults() {
+      document.getElementById("quiz-container").classList.add("hidden");
+      document.getElementById("result-container").classList.remove("hidden");
+      const pct = ((score / QUESTIONS.length) * 100).toFixed(1);
+      let level = "Needs Improvement";
+      let badgeClass = "needs-improvement";
+      if (pct >= 85) { level = "Expert"; badgeClass = ""; }
+      else if (pct >= 70) { level = "Proficient"; badgeClass = ""; }
+      else if (pct >= 50) { level = "Intermediate"; badgeClass = "intermediate"; }
+
+      document.getElementById("final-score").textContent = `${score}/${QUESTIONS.length}`;
+      document.getElementById("percentage").textContent = pct;
+      document.getElementById("performance").textContent = level;
+      const badge = document.getElementById("level-badge");
+      badge.textContent = `🏅 ${level}`;
+      badge.className = `level-badge ${badgeClass}`;
+    }
+
+    function restartQuiz() { location.reload(); }
+
+    loadQuestion();
+    startTimer();
+  </script>
+</body>
+</html>
