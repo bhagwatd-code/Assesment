@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Platforms Knowledge Assessment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --surface-2: #1a2235;
+      --border: #2a3654;
+      --accent: #6ee7b7;
+      --accent-dim: #34d399;
+      --accent-glow: rgba(110, 231, 183, 0.15);
+      --red: #f87171;
+      --red-dim: rgba(248, 113, 113, 0.15);
+      --green: #6ee7b7;
+      --green-dim: rgba(110, 231, 183, 0.15);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(110, 231, 183, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(99, 102, 241, 0.06) 0%, transparent 50%);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    /* Header */
+    .quiz-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .quiz-header .badge {
+      display: inline-block;
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-glow);
+      border: 1px solid rgba(110,231,183,0.25);
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    .quiz-header h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .quiz-header h1 span { color: var(--accent); }
+
+    /* Top stats bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .stat-value.timer-urgent { color: var(--red); }
+    .stat-value.score-val { color: var(--accent); }
+
+    /* Progress bar */
+    .progress-track {
+      height: 4px;
+      background: var(--surface-2);
+      border-radius: 99px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    /* Quiz card */
+    .quiz-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+    }
+
+    .question-meta {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .pill {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--surface-2);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .pill.category { color: var(--accent); border-color: rgba(110,231,183,0.2); background: var(--accent-glow); }
+
+    #question {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(17px, 3vw, 21px);
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.45;
+      margin-bottom: 28px;
+    }
+
+    /* Options */
+    .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+
+    .option-btn {
+      width: 100%;
+      padding: 15px 18px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      line-height: 1.4;
+    }
+    .option-btn:hover:not(:disabled) {
+      background: rgba(110, 231, 183, 0.07);
+      border-color: rgba(110, 231, 183, 0.4);
+      color: var(--text-primary);
+      transform: translateX(3px);
+    }
+    .option-btn:disabled { cursor: not-allowed; }
+
+    .option-letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+      margin-top: 1px;
+      transition: all 0.2s;
+    }
+    .option-btn:hover:not(:disabled) .option-letter {
+      background: var(--accent-glow);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .option-btn.correct {
+      background: rgba(110, 231, 183, 0.12);
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+    .option-btn.correct .option-letter {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0a0e1a;
+    }
+    .option-btn.wrong {
+      background: rgba(248, 113, 113, 0.1);
+      border-color: var(--red);
+      color: var(--text-primary);
+    }
+    .option-btn.wrong .option-letter {
+      background: var(--red);
+      border-color: var(--red);
+      color: #fff;
+    }
+
+    /* Feedback */
+    .feedback { margin-bottom: 20px; }
+    .feedback-box {
+      padding: 16px 18px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+    .correct-feedback {
+      background: rgba(110, 231, 183, 0.1);
+      border: 1px solid rgba(110, 231, 183, 0.3);
+    }
+    .correct-feedback strong { color: var(--accent); }
+    .wrong-feedback {
+      background: rgba(248, 113, 113, 0.1);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+    }
+    .wrong-feedback strong { color: var(--red); }
+    .feedback-box .correct-answer {
+      margin-top: 6px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .feedback-box .explanation {
+      margin-top: 8px;
+      color: var(--text-secondary);
+    }
+
+    /* Next button */
+    #next-btn {
+      width: 100%;
+      padding: 15px;
+      background: var(--accent);
+      color: #0a0e1a;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 0.02em;
+    }
+    #next-btn:hover {
+      background: #a7f3d0;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(110, 231, 183, 0.25);
+    }
+    #next-btn:active { transform: translateY(0); }
+
+    /* Hidden */
+    .hidden { display: none !important; }
+
+    /* Results */
+    #result-container {
+      text-align: center;
+      padding: 12px 0;
+    }
+    .result-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+    #result-container h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .result-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      font-size: 15px;
+    }
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+    .result-stat {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 12px;
+    }
+    .result-stat .r-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .result-stat .r-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .result-stat .r-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .level-badge {
+      display: inline-block;
+      padding: 8px 22px;
+      border-radius: 99px;
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 28px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid rgba(110,231,183,0.3);
+    }
+    .level-badge.needs-improvement { 
+      background: rgba(248,113,113,0.1); 
+      color: var(--red); 
+      border-color: rgba(248,113,113,0.3); 
+    }
+    .level-badge.intermediate {
+      background: rgba(251,191,36,0.1);
+      color: #fbbf24;
+      border-color: rgba(251,191,36,0.3);
+    }
+
+    #restart-btn {
+      padding: 14px 40px;
+      background: var(--accent);
+      color: #0a0e1a;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    #restart-btn:hover {
+      background: #a7f3d0;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(110,231,183,0.25);
+    }
+
+    @media (max-width: 480px) {
+      .quiz-card { padding: 20px; }
+      .result-grid { grid-template-columns: 1fr; }
+      .stats-bar { gap: 8px; }
+      .stat-card { padding: 10px; }
+      .stat-value { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="quiz-header">
+      <div class="badge">Assessment</div>
+      <h1>AI Platforms <span>Knowledge</span> Test</h1>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">Question</div>
+        <div class="stat-value" id="progress">1/100</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Score</div>
+        <div class="stat-value score-val" id="score">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Time Left</div>
+        <div class="stat-value" id="timer">45:00</div>
+      </div>
+    </div>
+
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width:1%"></div>
+    </div>
+
+    <div class="quiz-card">
+      <div id="quiz-container">
+        <div class="question-meta">
+          <span class="pill category" id="q-category">AI Fundamentals</span>
+          <span class="pill" id="q-difficulty">Basic</span>
+        </div>
+        <h2 id="question"></h2>
+        <div id="options" class="options"></div>
+        <div id="feedback" class="feedback"></div>
+        <button id="next-btn">Next Question →</button>
+      </div>
+
+      <div id="result-container" class="hidden">
+        <div class="result-icon">🎯</div>
+        <h2>Assessment Complete</h2>
+        <p class="result-subtitle">Here's how you performed</p>
+
+        <div class="result-grid">
+          <div class="result-stat">
+            <div class="r-label">Score</div>
+            <div class="r-value" id="final-score">—</div>
+            <div class="r-sub">questions correct</div>
+          </div>
+          <div class="result-stat">
+            <div class="r-label">Accuracy</div>
+            <div class="r-value"><span id="percentage">—</span>%</div>
+            <div class="r-sub">correct answers</div>
+          </div>
+          <div class="result-stat">
+            <div class="r-label">Level</div>
+            <div class="r-value" id="performance" style="font-size:16px">—</div>
+            <div class="r-sub">proficiency</div>
+          </div>
+        </div>
+
+        <div class="level-badge" id="level-badge">—</div><br>
+        <button id="restart-btn" onclick="restartQuiz()">Restart Quiz</button>
+      </div>
+    </div>
+  </div>
+
+    const QUESTIONS = [
+  { id:1, category:"AI Fundamentals", difficulty:"Basic",
+    question:"Which of the following best distinguishes Machine Learning from traditional rule-based programming?",
+    options:["ML requires hand-coded if-else logic for every scenario","ML systems learn patterns from data rather than explicit rules","ML can only work with structured tabular data","ML eliminates the need for any human-defined objectives"],
+    answer:1, explanation:"Traditional programming encodes explicit rules. ML instead infers rules and patterns directly from training data." },
+  { id:2, category:"AI Fundamentals", difficulty:"Basic",
+    question:"What is the primary difference between supervised and unsupervised learning?",
+    options:["Supervised learning uses GPUs; unsupervised uses CPUs","Supervised learning trains on labeled data; unsupervised finds patterns in unlabeled data","Supervised learning is always faster than unsupervised","Unsupervised learning requires more labeled data than supervised"],
+    answer:1, explanation:"Supervised learning maps inputs to known outputs. Unsupervised learning discovers hidden structure without labels." },
+  { id:3, category:"AI Fundamentals", difficulty:"Intermediate",
+    question:"What is the vanishing gradient problem in deep neural networks?",
+    options:["Gradients becoming too large, causing weight overflow","Gradients shrinking to near-zero during backpropagation, preventing early layers from learning","The model forgetting old tasks when trained on new data","Loss function values oscillating instead of converging"],
+    answer:1, explanation:"In deep networks, gradients shrink exponentially during backpropagation, making weights in early layers update negligibly. ReLU activations and batch normalisation help mitigate this." },
+  { id:4, category:"AI Fundamentals", difficulty:"Intermediate",
+    question:"What does 'overfitting' mean in machine learning?",
+    options:["The model trains too slowly due to insufficient compute","The model memorises training data and performs poorly on unseen data","The model is too small to capture problem complexity","The model uses more features than it has training rows"],
+    answer:1, explanation:"An overfit model learns noise specific to training data rather than general trends, causing high training accuracy but poor generalisation." },
+  { id:5, category:"AI Fundamentals", difficulty:"Advanced",
+    question:"What is the role of the attention mechanism introduced in 'Attention Is All You Need' (2017)?",
+    options:["It replaces activation functions in feedforward layers","It lets the model dynamically weigh the relevance of different tokens when producing each output token","It compresses input sequences into a fixed-size embedding","It regularises weights to prevent gradient explosion"],
+    answer:1, explanation:"Self-attention computes a weighted sum of all token representations, letting the model focus on contextually relevant parts regardless of their distance in the sequence." },
+  { id:6, category:"LLMs", difficulty:"Basic",
+    question:"What does the 'temperature' parameter control when sampling from an LLM?",
+    options:["The speed of token generation","The randomness of output — higher values produce more varied, creative responses","The maximum context window size","The number of transformer layers used during inference"],
+    answer:1, explanation:"Temperature scales logits before softmax. Low temperature makes output deterministic; high temperature increases diversity and randomness." },
+  { id:7, category:"LLMs", difficulty:"Basic",
+    question:"What is 'hallucination' in Large Language Models?",
+    options:["A visual artifact when rendering model outputs in a UI","The model confidently generating factually incorrect or fabricated information","The model refusing to answer a sensitive question","The model repeating the same sentence multiple times"],
+    answer:1, explanation:"LLMs predict statistically likely tokens rather than retrieving verified facts, so they can produce plausible-sounding but entirely false statements." },
+  { id:8, category:"LLMs", difficulty:"Intermediate",
+    question:"What is 'fine-tuning' an LLM?",
+    options:["Reducing the model's parameter count to cut inference costs","Training a pre-trained model further on a smaller domain-specific dataset to adapt its behaviour","Quantising model weights from 32-bit to 4-bit precision","Running the model on specialised hardware accelerators"],
+    answer:1, explanation:"Fine-tuning continues training on curated domain data, updating weights so the model better follows instructions or domain-specific knowledge." },
+  { id:9, category:"LLMs", difficulty:"Intermediate",
+    question:"What does 'context window' mean for an LLM like GPT-4 or Claude?",
+    options:["The physical screen size where model outputs are displayed","The maximum number of tokens (input + output combined) the model can process in one inference call","The number of training epochs used","The timeout before a model stops responding"],
+    answer:1, explanation:"The context window defines the total token budget per inference. Inputs and outputs together must fit within this limit." },
+  { id:10, category:"LLMs", difficulty:"Advanced",
+    question:"What is Reinforcement Learning from Human Feedback (RLHF)?",
+    options:["Training a model purely on web-scraped text with no human involvement","Human preference ratings train a reward model, which guides policy optimisation via RL to produce better outputs","An approach where the LLM plays games to learn language","A method to reduce compute costs using synthetic feedback"],
+    answer:1, explanation:"RLHF first trains a reward model on human preference data, then uses PPO or similar RL algorithms to optimise the LLM's outputs toward higher-reward responses." },
+  { id:11, category:"Prompt Engineering", difficulty:"Basic",
+    question:"What is 'few-shot prompting'?",
+    options:["Running a model with minimal GPU memory","Providing a few input-output examples in the prompt to guide the model's responses","Limiting the prompt to under 50 tokens","Using only one system message per session"],
+    answer:1, explanation:"Few-shot prompting includes representative examples in the prompt, allowing the model to infer the desired format or reasoning style without gradient updates." },
+  { id:12, category:"Prompt Engineering", difficulty:"Intermediate",
+    question:"What is 'chain-of-thought' (CoT) prompting?",
+    options:["Linking multiple API calls together in a pipeline","Instructing the model to reason step-by-step before giving a final answer, improving accuracy on complex tasks","Caching model responses for repeated identical queries","Prompting the model to generate code instead of prose"],
+    answer:1, explanation:"CoT prompting asks the model to articulate intermediate reasoning steps, significantly boosting performance on arithmetic, logical, and multi-step problems." },
+  { id:13, category:"Prompt Engineering", difficulty:"Intermediate",
+    question:"What is a 'system prompt' in modern LLM APIs?",
+    options:["A low-level OS command sent before an API request","A privileged instruction setting the model's persona, context, and behaviour before the user conversation begins","The first message a user types in a chatbot UI","A prompt automatically generated by the model's tokeniser"],
+    answer:1, explanation:"System prompts appear before the user conversation and are used to define the model's role, tone, restrictions, and task context." },
+  { id:14, category:"Prompt Engineering", difficulty:"Advanced",
+    question:"What is 'prompt injection' and why is it risky in agentic AI systems?",
+    options:["Accidentally sending the same prompt twice","Malicious instructions hidden in external content that hijack an AI agent's behaviour when it processes that content","Using too many tokens in a single prompt","Inserting code snippets inside natural-language prompts"],
+    answer:1, explanation:"Prompt injection occurs when adversarial text in the environment (e.g., a webpage the agent reads) overrides the developer's system instructions, potentially causing data leakage or unintended actions." },
+  { id:15, category:"Prompt Engineering", difficulty:"Advanced",
+    question:"What does 'ReAct' (Reason + Act) prompting enable an LLM to do?",
+    options:["Generate reactive UI components from text descriptions","Interleave reasoning traces with tool-use actions, enabling iterative plan-observe-refine cycles","Fine-tune itself based on user reactions","Automatically rewrite prompts when they fail"],
+    answer:1, explanation:"ReAct frames prompting so the model alternates between Thought and Act steps, then observes the result, enabling more reliable tool use and multi-step task completion." },
+  { id:16, category:"RAG", difficulty:"Basic",
+    question:"What problem does Retrieval-Augmented Generation (RAG) primarily solve?",
+    options:["Speeding up the tokenisation of long documents","Grounding LLM responses in up-to-date or proprietary knowledge not present in training data","Reducing GPU memory during inference","Automatically fine-tuning models on new data"],
+    answer:1, explanation:"LLMs have a static knowledge cutoff and cannot access private data. RAG retrieves relevant documents at query time and provides them as context, reducing hallucinations." },
+  { id:17, category:"RAG", difficulty:"Intermediate",
+    question:"In a RAG pipeline, what is the role of the 'retriever' component?",
+    options:["It generates the final natural-language answer","It scores and ranks candidates using the LLM","It fetches the most semantically relevant documents from a knowledge store based on the user's query","It monitors latency and cost of API calls"],
+    answer:2, explanation:"The retriever converts the query to a vector or keyword representation and fetches top-k relevant chunks from the document store." },
+  { id:18, category:"RAG", difficulty:"Intermediate",
+    question:"What is 'chunking' in the context of building a RAG knowledge base?",
+    options:["Compressing model weights into smaller files","Splitting large documents into smaller text segments to fit context windows and improve retrieval precision","Batching multiple user queries for efficiency","Encrypting sensitive documents before storage"],
+    answer:1, explanation:"Documents are split into chunks (e.g., 256–512 tokens) so each can be independently embedded and retrieved. Chunk size affects both recall and context quality." },
+  { id:19, category:"RAG", difficulty:"Advanced",
+    question:"What is 'reranking' in a RAG pipeline and why is it used?",
+    options:["Reordering documents alphabetically before indexing","Using a more accurate cross-encoder to re-score the top-k retrieved chunks before passing them to the LLM","Re-embedding documents every time a query is made","Sorting retrieved chunks by creation date"],
+    answer:1, explanation:"Bi-encoder retrievers trade accuracy for speed. A cross-encoder reranker then scores each (query, chunk) pair jointly, improving relevance before the LLM generates an answer." },
+  { id:20, category:"RAG", difficulty:"Advanced",
+    question:"What distinguishes 'naive RAG' from 'advanced RAG' architectures?",
+    options:["Advanced RAG uses larger LLMs; naive RAG uses smaller ones","Advanced RAG adds query rewriting, hybrid retrieval, reranking, and iterative feedback; naive RAG does a single retrieve-then-generate pass","Advanced RAG skips the retrieval step entirely","Naive RAG uses vector databases; advanced RAG uses SQL"],
+    answer:1, explanation:"Naive RAG simply retrieves and generates. Advanced RAG adds query transformation, multi-stage retrieval, reranking, and self-refinement steps to improve quality and faithfulness." },
+  { id:21, category:"Embeddings", difficulty:"Basic",
+    question:"What is a text embedding?",
+    options:["A method of encrypting text for secure storage","A dense numerical vector representing the semantic meaning of a piece of text","A compressed version of a document that reduces token count","A tokeniser output showing byte-pair encoding of words"],
+    answer:1, explanation:"Embeddings map text into a high-dimensional vector space where semantically similar texts are geometrically close, enabling similarity search and clustering." },
+  { id:22, category:"Embeddings", difficulty:"Intermediate",
+    question:"Which metric is most commonly used to measure similarity between two embedding vectors?",
+    options:["Euclidean distance only","Cosine similarity, which measures the angle between vectors regardless of magnitude","Manhattan distance","Hamming distance"],
+    answer:1, explanation:"Cosine similarity is preferred for embeddings because it captures directional similarity (semantic closeness) and is invariant to vector magnitude." },
+  { id:23, category:"Embeddings", difficulty:"Intermediate",
+    question:"Why would you fine-tune an embedding model on domain-specific data?",
+    options:["To make the model generate longer responses","To adapt the embedding space so domain-specific terms are represented more accurately, improving retrieval precision","To reduce embedding dimensionality and save storage","To make the model respond faster"],
+    answer:1, explanation:"General-purpose embeddings may poorly separate domain concepts. Fine-tuning on in-domain pairs (contrastive loss) shifts the space to improve retrieval for that domain." },
+  { id:24, category:"Embeddings", difficulty:"Advanced",
+    question:"What is 'Matryoshka Representation Learning' (MRL)?",
+    options:["A technique for nesting multiple LLMs inside each other","Training embeddings so any prefix of N dimensions forms a coherent lower-dimensional embedding, enabling variable-length truncation without retraining","A method for hierarchical document chunking","An embedding compression technique using quantisation"],
+    answer:1, explanation:"MRL trains a single model where any prefix slice (e.g., first 256, 512, 1024 dims) is itself a useful embedding, enabling an accuracy-vs-storage trade-off at inference time." },
+  { id:25, category:"Embeddings", difficulty:"Advanced",
+    question:"What is 'late interaction' retrieval as used by models like ColBERT?",
+    options:["Retrieving documents after the LLM has already generated an answer","Storing per-token embeddings for documents and computing token-level MaxSim similarity at query time, rather than collapsing each document to a single vector","A retrieval technique that adds a time delay for caching","Interleaving retrieval with generation in a streaming pipeline"],
+    answer:1, explanation:"ColBERT stores all token embeddings per document (expensive storage) but enables fine-grained MaxSim scoring at query time, achieving near cross-encoder accuracy with bi-encoder speed." },
+  { id:26, category:"Vector Databases", difficulty:"Basic",
+    question:"What is the primary use case for a vector database in an AI application?",
+    options:["Storing relational customer records with SQL queries","Efficiently storing and searching high-dimensional embedding vectors for semantic similarity lookup","Caching API responses to reduce latency","Managing model weights and checkpoints"],
+    answer:1, explanation:"Vector databases are purpose-built for Approximate Nearest Neighbour (ANN) search over dense embeddings, enabling fast semantic retrieval at scale." },
+  { id:27, category:"Vector Databases", difficulty:"Intermediate",
+    question:"What indexing algorithm do most vector databases (Pinecone, Weaviate, Qdrant) use for fast ANN search?",
+    options:["B-tree indexing","HNSW (Hierarchical Navigable Small World graphs)","Hash-based partitioning","Inverted index only"],
+    answer:1, explanation:"HNSW builds a layered graph enabling logarithmic-time approximate nearest-neighbour search with high recall, making it the dominant algorithm in modern vector databases." },
+  { id:28, category:"Vector Databases", difficulty:"Intermediate",
+    question:"What is 'hybrid search' in the context of vector databases?",
+    options:["Running two separate databases and merging results manually","Combining dense vector (semantic) search with sparse keyword (BM25/TF-IDF) search to improve retrieval quality","Using two different embedding models simultaneously","Distributed search across multiple cloud regions"],
+    answer:1, explanation:"Hybrid search blends semantic similarity with exact keyword matching, handling cases where specific terms (names, codes, acronyms) matter — something pure vector search can miss." },
+  { id:29, category:"Vector Databases", difficulty:"Advanced",
+    question:"What trade-off does Product Quantisation (PQ) introduce in a vector database?",
+    options:["Faster writes but slower reads","Reduced memory footprint and faster search at the cost of some recall accuracy","Higher recall but much slower query latency","Larger index size in exchange for exact search"],
+    answer:1, explanation:"PQ decomposes vectors into sub-vectors and quantises each independently, cutting memory dramatically and speeding up distance calculations at the cost of approximation errors." },
+  { id:30, category:"Vector Databases", difficulty:"Advanced",
+    question:"What does 'namespace' or 'collection' isolation in a vector database enable in multi-tenant SaaS?",
+    options:["Running multiple embedding models in parallel","Logically separating each tenant's vectors so queries only search within that tenant's data, ensuring privacy and performance isolation","Encrypting each user's data at rest","Sharding the database across geographic regions"],
+    answer:1, explanation:"Namespace isolation ensures tenant A's query never touches tenant B's embeddings, providing data privacy and preventing cross-tenant result contamination." },
+  { id:31, category:"AI Governance", difficulty:"Basic",
+    question:"What is the primary goal of an AI governance framework within an organisation?",
+    options:["To maximise the speed of AI model deployment","To ensure AI systems are developed and used responsibly, ethically, and in compliance with regulations","To eliminate human oversight from AI decision-making","To reduce the cost of AI infrastructure"],
+    answer:1, explanation:"AI governance establishes policies, processes, and accountability structures to manage risks, ensure fairness, maintain compliance, and build trust in AI systems." },
+  { id:32, category:"AI Governance", difficulty:"Intermediate",
+    question:"What are 'model cards' as a governance practice?",
+    options:["Physical ID cards issued to AI practitioners","Structured documentation describing a model's intended use, performance across subgroups, known limitations, and ethical considerations","API keys issued for accessing AI models","A real-time dashboard showing model performance metrics"],
+    answer:1, explanation:"Model cards (introduced by Google) provide standardised documentation helping stakeholders understand what an AI model was trained for, how it performs across groups, and where it should not be used." },
+  { id:33, category:"AI Governance", difficulty:"Intermediate",
+    question:"What does the EU AI Act classify as a 'high-risk' AI system?",
+    options:["Any AI system costing more than €1 million to develop","AI systems in critical sectors like healthcare, law enforcement, employment, and education that could significantly impact people's rights or safety","Any generative AI model regardless of use case","AI systems processing more than 1 billion tokens per day"],
+    answer:1, explanation:"The EU AI Act's risk-based framework designates applications in sensitive domains (medical devices, biometric identification, credit scoring, CV screening) as high-risk, requiring conformity assessments." },
+  { id:34, category:"AI Governance", difficulty:"Advanced",
+    question:"What is 'algorithmic auditing' and why is it important?",
+    options:["Checking an AI model's source code for syntax errors","An independent evaluation of an AI system's behaviour, fairness, accuracy, and compliance against defined criteria","Monitoring API logs for unusual traffic patterns","Reviewing GPU usage to optimise cloud costs"],
+    answer:1, explanation:"Algorithmic auditing involves systematic testing by internal or third-party auditors to detect bias, errors, and compliance gaps before and after deployment, providing accountability." },
+  { id:35, category:"AI Governance", difficulty:"Advanced",
+    question:"What is the difference between 'explainability' and 'interpretability' in AI governance?",
+    options:["They are synonyms with no real distinction","Interpretability refers to understanding a model's internal mechanics; explainability produces human-understandable justifications for specific decisions","Interpretability is for regulators; explainability is for developers","Explainability applies only to computer vision models"],
+    answer:1, explanation:"Interpretability (e.g., inspecting attention weights) examines model internals. Explainability (e.g., LIME, SHAP) generates post-hoc, human-readable explanations for individual predictions." },
+  { id:36, category:"Responsible AI", difficulty:"Basic",
+    question:"What is 'algorithmic bias' in AI systems?",
+    options:["A programming bug causing random errors","Systematic and unfair discrimination in AI outputs resulting from biased training data, flawed model design, or skewed feedback loops","A technique for improving accuracy on rare events","An intentional feature to handle edge cases"],
+    answer:1, explanation:"Algorithmic bias occurs when an AI system produces outputs that unfairly advantage or disadvantage groups based on characteristics like race or gender, often reflecting historical inequalities in training data." },
+  { id:37, category:"Responsible AI", difficulty:"Intermediate",
+    question:"Why is 'fairness through unawareness' generally considered insufficient?",
+    options:["It is too computationally expensive","Simply removing protected attributes (race, gender) from training data is not enough because proxy variables (zip code, name) can still carry discriminatory signals","Training separate models per demographic group is better","A random classifier ensures equal outcomes"],
+    answer:1, explanation:"Removing protected attributes doesn't guarantee fairness because correlated proxy variables remain. Rigorous fairness constraints (equal opportunity, demographic parity) must be explicitly measured and enforced." },
+  { id:38, category:"Responsible AI", difficulty:"Intermediate",
+    question:"What is 'differential privacy' and how is it applied to AI?",
+    options:["A method for encrypting model weights during inference","A mathematical framework that adds calibrated noise so individual records cannot be identified, used during training to protect privacy","A technique for comparing performance across model versions","A privacy policy document"],
+    answer:1, explanation:"Differential privacy provides a provable guarantee: an adversary cannot determine whether any individual's data was in the training set, enabling privacy-preserving ML on sensitive datasets." },
+  { id:39, category:"Responsible AI", difficulty:"Advanced",
+    question:"What is 'Constitutional AI' as described by Anthropic?",
+    options:["Training AI models according to a country's legal constitution","A method where a set of principles guides AI self-critique and revision, reducing reliance on human-labelled harmful data during RLHF","An AI system that only responds to democratically approved prompts","Using constitutional law as training data for legal AI"],
+    answer:1, explanation:"Constitutional AI (CAI) trains models to evaluate and revise their outputs using predefined principles. This reduces harmful outputs while requiring fewer human labels for harmful content." },
+  { id:40, category:"Responsible AI", difficulty:"Advanced",
+    question:"What is 'federated learning' and what privacy benefit does it offer?",
+    options:["Multiple companies training one model together on a shared cloud server","Models are trained locally on edge devices and only gradient updates — not raw data — are shared with a central server, keeping sensitive data on-device","Training a model on data from different countries simultaneously","Federating model identity across multiple AI platforms"],
+    answer:1, explanation:"Federated learning avoids centralising sensitive data. Each device trains locally and sends only parameter updates for aggregation, used in healthcare and mobile applications where raw data cannot leave the source." },
+  { id:41, category:"AI Security", difficulty:"Basic",
+    question:"What is an 'adversarial attack' in the context of ML models?",
+    options:["A cyberattack on cloud infrastructure hosting an AI model","Carefully crafted inputs designed to fool an AI model into making incorrect predictions, often imperceptible to humans","A denial-of-service attack that slows API response times","Unauthorised access to training datasets"],
+    answer:1, explanation:"Adversarial attacks add small, invisible perturbations to inputs that cause the model to misclassify, exploiting the geometry of the model's decision boundary." },
+  { id:42, category:"AI Security", difficulty:"Intermediate",
+    question:"What is 'data poisoning' in AI security?",
+    options:["Storing training data in an unencrypted database","Injecting malicious or mislabelled samples into the training dataset to corrupt the model's learned behaviour","Overloading the training pipeline with redundant data","Deleting training data after training is complete"],
+    answer:1, explanation:"Data poisoning attacks compromise model integrity by contaminating training data, for example injecting backdoor triggers so the model behaves normally in general but fails in specific adversarial conditions." },
+  { id:43, category:"AI Security", difficulty:"Intermediate",
+    question:"What is 'jailbreaking' an LLM?",
+    options:["Removing access restrictions from an LLM API account","Using carefully crafted prompts to bypass an LLM's safety guidelines, causing it to produce content it was trained to refuse","A technique to speed up LLM inference","Accessing an LLM without an API key"],
+    answer:1, explanation:"Jailbreaking exploits safety alignment weaknesses using role-play, hypothetical framing, or adversarial patterns to elicit harmful outputs the model's training aimed to prevent." },
+  { id:44, category:"AI Security", difficulty:"Advanced",
+    question:"What is a 'model inversion attack'?",
+    options:["Reversing a model's weights back to its initial random state","An attack where an adversary queries a model to reconstruct sensitive training data, such as private faces from a facial recognition model","Extracting model source code via the API","Running a model in reverse to generate prompts from outputs"],
+    answer:1, explanation:"Model inversion attacks exploit a model's predictions to reconstruct training examples, posing a privacy risk when models are trained on sensitive personal data." },
+  { id:45, category:"AI Security", difficulty:"Advanced",
+    question:"In the OWASP Top 10 for LLM Applications, what is 'insecure output handling'?",
+    options:["Returning model outputs that are too long for the UI to display","Failing to validate or sanitise LLM-generated content before using it downstream, enabling attacks like XSS, SSRF, or SQL injection","Logging model outputs without encryption","Displaying model confidence scores to end users"],
+    answer:1, explanation:"When LLM outputs are passed directly to interpreters (browsers, shells, databases) without sanitisation, they can carry malicious payloads. Proper output validation and encoding are essential." },
+  { id:46, category:"DPDPA Compliance", difficulty:"Basic",
+    question:"What does DPDPA stand for?",
+    options:["Digital Privacy and Data Protection Act","Digital Personal Data Protection Act","Data Privacy and Digital Processing Agreement","Data Protection and Public Data Act"],
+    answer:1, explanation:"The Digital Personal Data Protection Act (DPDPA) 2023 is India's primary legislation governing the processing of digital personal data." },
+  { id:47, category:"DPDPA Compliance", difficulty:"Basic",
+    question:"Under the DPDPA 2023, who is a 'Data Fiduciary'?",
+    options:["A government official who enforces data laws","Any entity that determines the purpose and means of processing personal data","A third-party auditor who reviews data practices","An individual whose data is being processed"],
+    answer:1, explanation:"Data Fiduciaries (organisations or individuals who decide why and how personal data is processed) are similar to the 'Data Controller' concept under GDPR." },
+  { id:48, category:"DPDPA Compliance", difficulty:"Intermediate",
+    question:"What is a key obligation of Data Fiduciaries regarding data retention under the DPDPA?",
+    options:["They must retain all personal data for a minimum of 10 years","They must erase personal data once the purpose for which it was collected is fulfilled and retention is no longer legally required","They may retain data indefinitely as long as it is encrypted","They must seek fresh consent every 6 months"],
+    answer:1, explanation:"DPDPA mandates purpose limitation and storage limitation: data must be deleted once the processing purpose is met and no legal obligation requires continued retention." },
+  { id:49, category:"DPDPA Compliance", difficulty:"Intermediate",
+    question:"What right does a Data Principal have under the DPDPA regarding their data?",
+    options:["The right to demand financial compensation for any data breach","The right to request correction of inaccurate data and to request erasure when processing is no longer necessary","The right to access the full source code of any AI system processing their data","The right to opt out of all digital services"],
+    answer:1, explanation:"DPDPA grants individuals the right to correct inaccuracies and have data erased when no longer needed, mirroring GDPR's 'right to rectification' and 'right to erasure'." },
+  { id:50, category:"DPDPA Compliance", difficulty:"Advanced",
+    question:"What additional obligations does 'Significant Data Fiduciary' status entail under the DPDPA?",
+    options:["Any company processing more than 1 TB of data annually, required only to register","An entity designated by the central government based on risk, volume, and sensitivity, required to appoint a DPO, conduct DPIAs, and undergo periodic audits","Any foreign company offering services in India, required to store all data locally","A stock-listed company required to publish annual privacy reports"],
+    answer:1, explanation:"The government designates Significant Data Fiduciaries based on risk and sensitivity. They face enhanced obligations: DPO appointment, Data Protection Impact Assessments, and compliance audits." },
+  { id:51, category:"Enterprise AI Adoption", difficulty:"Basic",
+    question:"Why do enterprises often prefer API access to LLMs over self-hosting open-source models?",
+    options:["API-based models always produce better outputs","APIs reduce infrastructure complexity and time-to-deployment, letting teams focus on use-case development rather than model ops","Open-source models cannot be fine-tuned","API providers own all data sent through their APIs"],
+    answer:1, explanation:"Self-hosting requires expertise in GPU provisioning, model serving, and scaling. API access abstracts this complexity, enabling faster deployment." },
+  { id:52, category:"Enterprise AI Adoption", difficulty:"Intermediate",
+    question:"What is an 'AI Centre of Excellence' (CoE) in a large enterprise?",
+    options:["A physical data centre dedicated exclusively to AI workloads","A centralised team setting AI strategy, standards, tooling, and best practices to enable governed and scalable AI adoption across business units","An external consulting firm hired to build AI models","A government certification body for AI products"],
+    answer:1, explanation:"An AI CoE acts as a shared capability hub providing reusable frameworks, governance guardrails, upskilling, and technical support — ensuring consistent and responsible AI deployment organisation-wide." },
+  { id:53, category:"Enterprise AI Adoption", difficulty:"Intermediate",
+    question:"What is 'shadow AI' and why is it a risk for enterprises?",
+    options:["An AI model that mimics another model's behaviour","Employees using unauthorised AI tools outside IT oversight, potentially exposing sensitive data to third-party platforms and creating compliance risks","An AI system deployed in a test environment but not production","A backup AI model that activates when the primary fails"],
+    answer:1, explanation:"Shadow AI refers to unsanctioned use of consumer AI tools (e.g., ChatGPT) for work tasks. This creates data privacy risks, IP leakage, and compliance issues since business data enters uncontrolled systems." },
+  { id:54, category:"Enterprise AI Adoption", difficulty:"Advanced",
+    question:"What is the 'build vs. buy vs. fine-tune' decision framework in enterprise AI?",
+    options:["A framework for deciding whether to buy AI hardware or use cloud services","A strategic model for choosing between custom model development, off-the-shelf AI products, or fine-tuning foundation models — based on data sensitivity, differentiation needs, and resource availability","A procurement process for comparing AI vendor contracts","A technical framework for evaluating API providers"],
+    answer:1, explanation:"Build: full control, high cost, needed for unique IP. Buy: fast, limited customisation. Fine-tune: balance — adapts a foundation model on proprietary data at lower cost than building from scratch." },
+  { id:55, category:"Enterprise AI Adoption", difficulty:"Advanced",
+    question:"What is 'LLMOps' and how does it differ from traditional MLOps?",
+    options:["LLMOps is MLOps rebranded for marketing with no technical difference","LLMOps extends MLOps to address LLM-specific concerns: prompt versioning, context window management, LLM-as-judge evaluation, RAG pipeline monitoring, and token-based cost management","LLMOps focuses only on open-source models while MLOps covers proprietary ones","LLMOps replaces MLOps entirely in modern AI engineering"],
+    answer:1, explanation:"Traditional MLOps centres on feature pipelines and model metrics. LLMOps adds prompt management, hallucination monitoring, guardrails, and operational patterns unique to generative models." },
+  { id:56, category:"AI Governance", difficulty:"Intermediate",
+    question:"What is a 'Data Protection Impact Assessment' (DPIA) and when is it required?",
+    options:["An annual financial audit of data storage costs","A structured risk assessment required when AI processing is likely to result in high risk to individuals' rights, identifying and mitigating privacy risks before deployment","A technical benchmark measuring model inference speed","A user survey about data preferences"],
+    answer:1, explanation:"DPIAs (mandated under GDPR and similar frameworks) systematically analyse how personal data is processed, identify risks, and document mitigation measures for high-risk AI use cases." },
+  { id:57, category:"AI Governance", difficulty:"Advanced",
+    question:"What are the four core functions of the NIST AI Risk Management Framework (AI RMF)?",
+    options:["Plan, Build, Deploy, Monitor","Govern, Map, Measure, Manage","Identify, Protect, Detect, Respond","Design, Develop, Test, Audit"],
+    answer:1, explanation:"The NIST AI RMF organises AI risk management into: Govern (culture and policies), Map (categorise risks), Measure (analyse and assess risks), and Manage (prioritise and treat risks)." },
+  { id:58, category:"AI Governance", difficulty:"Intermediate",
+    question:"What is 'AI incident reporting' and why is it valuable for the industry?",
+    options:["Reporting AI project delays to management","Documenting cases where AI systems caused harm, bias, or unexpected failure, creating shared institutional knowledge that improves safety practices","Reporting API outages to the vendor's status page","Filing complaints about AI companies with regulators"],
+    answer:1, explanation:"AI incident databases (e.g., the AI Incident Database) catalogue real-world AI failures. This helps developers, policymakers, and auditors understand failure modes and design better safeguards." },
+  { id:59, category:"Responsible AI", difficulty:"Advanced",
+    question:"What is 'disparate impact' in the context of AI fairness?",
+    options:["An AI model performing differently on different hardware","When an AI system's decisions disproportionately disadvantage a protected group even without explicit use of protected attributes — measurable as a statistical ratio of outcomes across groups","A fairness metric measuring variance in model confidence","An impact assessment required only for government AI systems"],
+    answer:1, explanation:"Disparate impact (4/5ths rule from US employment law) measures whether the selection rate for a protected group is less than 80% of the highest-selected group. AI systems can produce disparate impact through proxy variables." },
+  { id:60, category:"RAG", difficulty:"Advanced",
+    question:"What is 'GraphRAG' and when does it outperform standard vector RAG?",
+    options:["RAG implemented using graph databases for all use cases","A RAG approach that builds a knowledge graph over documents, enabling multi-hop reasoning across interconnected entities — outperforming standard RAG for complex relational queries","A faster vector search algorithm forming graph-like data structures","RAG applied specifically to social network data"],
+    answer:1, explanation:"GraphRAG (Microsoft Research) extracts entity relationships into a graph, enabling queries that require connecting multiple facts across documents — something chunk-based vector RAG struggles with." },
+  { id:61, category:"Prompt Engineering", difficulty:"Advanced",
+    question:"What is 'self-consistency' prompting?",
+    options:["Asking the model to check for typos in its own response","Generating multiple independent chain-of-thought reasoning paths and selecting the most consistent answer by majority vote, improving reliability on reasoning tasks","Ensuring the system prompt and user prompt don't contradict each other","Prompting the model to maintain the same tone throughout a conversation"],
+    answer:1, explanation:"Self-consistency samples diverse reasoning paths at higher temperature, then marginalises over them to select the most frequently reached answer, significantly boosting accuracy." },
+  { id:62, category:"Prompt Engineering", difficulty:"Intermediate",
+    question:"What is the purpose of 'output format specification' in prompt engineering?",
+    options:["Controlling the font and layout of the model's response in the UI","Explicitly instructing the model to return results in a specific structure (JSON, markdown table, numbered list) to enable reliable downstream parsing","Reducing the token count of the model's response","Preventing the model from using profanity"],
+    answer:1, explanation:"Without explicit format instructions, LLM output structure is unpredictable. Specifying JSON schemas, XML tags, or structured templates makes responses programmatically parseable." },
+  { id:63, category:"Embeddings", difficulty:"Intermediate",
+    question:"What is the difference between 'symmetric' and 'asymmetric' semantic search?",
+    options:["Symmetric uses cosine similarity; asymmetric uses dot product","Symmetric search finds similar-length texts matching each other (e.g., duplicate detection); asymmetric search matches short queries to longer documents (e.g., Q&A retrieval)","Symmetric uses one encoder; asymmetric uses two different encoders","Symmetric is always faster than asymmetric search"],
+    answer:1, explanation:"In symmetric search, query and document are of similar nature and use the same model. Asymmetric search uses bi-encoders optimised for short query → long passage matching, like MS-MARCO fine-tuned models." },
+  { id:64, category:"Vector Databases", difficulty:"Intermediate",
+    question:"What is the difference between 'dense' and 'sparse' vectors in retrieval systems?",
+    options:["Dense vectors are larger in file size than sparse vectors","Dense vectors have values in most dimensions (neural semantic representations); sparse vectors have most dimensions as zero (keyword-based like BM25/TF-IDF)","Dense vectors are used in SQL; sparse vectors in NoSQL","Sparse vectors are always more accurate than dense vectors"],
+    answer:1, explanation:"Dense vectors capture semantics but can miss exact keywords. Sparse vectors excel at exact-term matching. Hybrid retrieval combining both gives best coverage." },
+  { id:65, category:"AI Security", difficulty:"Advanced",
+    question:"What is 'supply chain security' in the context of ML models?",
+    options:["Securing the physical delivery of GPU servers","Ensuring the integrity of pre-trained models, datasets, and ML libraries to prevent tampered weights or malicious code from entering the AI pipeline","Managing vendor contracts for AI cloud services","Monitoring the carbon footprint of AI training"],
+    answer:1, explanation:"Attackers can distribute poisoned pre-trained models on platforms like Hugging Face. Supply chain security involves verifying model provenance, using signed model cards, and scanning dependencies." },
+  { id:66, category:"Enterprise AI Adoption", difficulty:"Intermediate",
+    question:"What is 'total cost of ownership' (TCO) analysis important for in AI adoption?",
+    options:["Calculating only the API subscription cost","Accounting for all costs including API fees, infrastructure, integration, maintenance, monitoring, retraining, compliance, and upskilling over time","Measuring the revenue an AI project will generate","Comparing the costs of different GPU vendors"],
+    answer:1, explanation:"TCO prevents underestimating AI project costs. Initial API costs represent only a fraction of total spend; integration, data preparation, governance, and ongoing maintenance often dominate." },
+  { id:67, category:"Enterprise AI Adoption", difficulty:"Advanced",
+    question:"What is an 'AI use case tiering' framework and why do enterprises use it?",
+    options:["A method to rank AI vendors by customer satisfaction","A governance mechanism classifying AI use cases by risk and complexity to apply proportionate oversight — high-risk uses get more rigorous review before deployment","A framework for training AI models in multiple programming languages","A tier-based pricing model for API usage"],
+    answer:1, explanation:"Tiering prevents both under-governance (high-risk uses deployed without scrutiny) and over-governance (low-risk tools delayed by heavy process). The right level of review is applied per risk tier." },
+  { id:68, category:"DPDPA Compliance", difficulty:"Advanced",
+    question:"What are 'legitimate uses' under DPDPA that do not require explicit consent?",
+    options:["Any processing by a government ministry for any purpose","Processing necessary for services requested by individuals, employment-related processing, and processing mandated by law or for legitimate state functions","Processing by any foreign company serving Indian citizens","Processing of anonymised data for commercial analytics"],
+    answer:1, explanation:"DPDPA carves out specific legitimate uses (state functions, employment, medical emergencies, legal compliance) where consent is not required, similar to GDPR's 'legitimate interests' and 'legal obligation' bases." },
+  { id:69, category:"DPDPA Compliance", difficulty:"Intermediate",
+    question:"What is a 'consent manager' under the DPDPA framework?",
+    options:["A software tool that collects user feedback about website design","An entity registered with the Data Protection Board that enables data principals to give, manage, review, and withdraw consent through an interoperable platform","A government official who approves data processing activities","A DPO whose primary function is managing consent forms"],
+    answer:1, explanation:"DPDPA introduces consent managers as trusted intermediaries providing individuals a single interface to manage consents across multiple data fiduciaries, similar to account aggregators in the financial sector." },
+  { id:70, category:"DPDPA Compliance", difficulty:"Advanced",
+    question:"How does the DPDPA treat cross-border transfers of personal data?",
+    options:["Cross-border transfers are completely prohibited","The central government may notify countries to which transfers are restricted; transfers to all other countries are permissible by default (negative list approach)","All cross-border transfers require prior board approval","Data can only be stored outside India if encrypted with government-approved keys"],
+    answer:1, explanation:"Unlike GDPR's adequacy decision model, DPDPA takes a negative list approach: transfers are allowed by default but the government can restrict transfers to specific countries." },
+  { id:71, category:"LLMs", difficulty:"Advanced",
+    question:"What is 'quantisation' in LLM deployment and what trade-off does it introduce?",
+    options:["Compressing prompt text to reduce token count","Reducing the numerical precision of model weights (e.g., from 32-bit float to 4-bit integer) to decrease memory and increase inference speed, at the cost of some accuracy","Splitting the model across multiple servers","Reducing parameters by pruning unused neurons"],
+    answer:1, explanation:"Quantisation (e.g., GPTQ, GGUF 4-bit) dramatically reduces VRAM requirements — allowing larger models to run on consumer GPUs — with typically minor perplexity degradation." },
+  { id:72, category:"LLMs", difficulty:"Advanced",
+    question:"What is 'speculative decoding' in LLM inference?",
+    options:["Predicting the next user message before they type it","Using a small draft model to generate candidate tokens quickly, which a larger model then verifies in parallel, reducing latency without changing output quality","Training the model to speculate about unknown facts","Caching common token sequences to skip computation"],
+    answer:1, explanation:"Speculative decoding uses a fast small model to propose multiple tokens ahead. The large model verifies them in a single forward pass, achieving 2-3x speedup with identical output distribution." },
+  { id:73, category:"LLMs", difficulty:"Advanced",
+    question:"What is 'mixture of experts' (MoE) architecture?",
+    options:["An ensemble of entirely separate models voted on for each query","A model architecture where only a subset of specialised 'expert' feed-forward layers are activated per token by a learned gating mechanism, achieving high parameter count with lower active compute per forward pass","Training multiple small models and merging their weights","Distributing model inference across multiple data centres"],
+    answer:1, explanation:"MoE (Mixtral, GPT-4, Gemini) allows a model to have many expert layers but activate only a few per token, enabling huge model capacity while keeping inference FLOPs comparable to a much smaller dense model." },
+  { id:74, category:"AI Security", difficulty:"Advanced",
+    question:"What is 'red teaming' for AI systems?",
+    options:["Using red-coloured UI for testing AI dashboards","Deliberately probing an AI system through adversarial testing to discover harmful outputs, jailbreaks, biases, and safety failures before deployment","A code review process performed by a competing team","Load testing an AI API to find performance bottlenecks"],
+    answer:1, explanation:"AI red teaming involves structured adversarial testing by internal or external teams attempting to make the model produce harmful, biased, or policy-violating outputs, informing safety improvements before release." },
+  { id:75, category:"RAG", difficulty:"Intermediate",
+    question:"What is 'semantic chunking' and why is it preferable to fixed-size chunking in some RAG applications?",
+    options:["Using a tokeniser to split documents by exact token count","Splitting documents at natural semantic boundaries (paragraph, topic shift) rather than arbitrary character counts, preserving coherent units of meaning for better retrieval","Reducing chunk size to a single sentence for maximum precision","Using the LLM itself to summarise each chunk"],
+    answer:1, explanation:"Fixed-size chunking can split a sentence or idea mid-way. Semantic chunking respects natural boundaries, so each retrieved chunk is a coherent, self-contained unit providing better context to the LLM." },
+  { id:76, category:"Prompt Engineering", difficulty:"Advanced",
+    question:"What is 'automatic prompt optimisation' (e.g., DSPy, OPRO)?",
+    options:["Writing prompts in a programming language rather than natural language","Using an LLM to automatically generate, evaluate, and refine prompts to maximise performance on a target task, replacing manual prompt engineering","Including metadata tags (author, date) in every prompt","Prompting a model about its own capabilities"],
+    answer:1, explanation:"Tools like DSPy, OPRO, and APE use LLMs as optimisers — generating candidate prompts, scoring them on a validation set, and iteratively improving them without human hand-crafting." },
+  { id:77, category:"RAG", difficulty:"Advanced",
+    question:"What is 'HyDE' (Hypothetical Document Embeddings) in retrieval?",
+    options:["A compression technique that removes duplicate documents before indexing","The LLM generates a hypothetical answer to the query, whose embedding is used to retrieve real documents semantically similar to an ideal answer","A type of knowledge graph used in RAG systems","Dynamically adjusting chunk sizes based on query length"],
+    answer:1, explanation:"HyDE addresses query-document vocabulary mismatch. The LLM writes a plausible answer (even if not factually precise), whose embedding better matches real document embeddings than the short query embedding alone." },
+  { id:78, category:"AI Security", difficulty:"Intermediate",
+    question:"What is 'PII detection and redaction' in AI pipelines?",
+    options:["Detecting personally identifiable information in model weights","Automatically identifying and masking sensitive personal data (names, IDs, emails, health info) before sending it to an LLM API, preventing data leakage to third-party models","Detecting when users share passwords in chat","A technique to improve model accuracy on personal datasets"],
+    answer:1, explanation:"Enterprises must prevent sensitive personal data from leaving their security boundary. PII detection tools scan inputs before LLM API calls and redact or pseudonymise identifiers, maintaining DPDPA/GDPR compliance." },
+  { id:79, category:"Vector Databases", difficulty:"Advanced",
+    question:"What is 'filtered vector search' and what implementation challenge does it introduce?",
+    options:["Searching only vectors that pass through a neural network filter","Combining a metadata filter (e.g., date range, category) with vector similarity search — challenging because naïve pre-filtering can eliminate candidates before ANN search, degrading recall","A search that removes duplicate vectors from results","Filtering results by vector magnitude"],
+    answer:1, explanation:"Efficient filtered ANN search is hard: pre-filtering reduces the candidate pool harming recall; post-filtering wastes computation. Solutions include segment-based indices, filtered HNSW, and hybrid architectures." },
+  { id:80, category:"Enterprise AI Adoption", difficulty:"Advanced",
+    question:"What is 'AI observability' and what does it measure beyond standard API logging?",
+    options:["Monitoring the physical AI hardware in a data centre","Instrumenting AI systems to track prompt/response quality, hallucination rates, latency distribution, token costs, retrieval relevance, guardrail triggers, and user satisfaction","Observing competitors' AI products","Logging the number of users who interact with an AI system"],
+    answer:1, explanation:"AI observability goes beyond uptime monitoring to measure the semantic quality of AI behaviour: Are responses faithful? Are retrievals relevant? Are costs within budget? Tools like LangSmith, Arize, and Helicone provide this." },
+  { id:81, category:"LLMs", difficulty:"Intermediate",
+    question:"Roughly how many English words correspond to 1,000 tokens in most LLM tokenisers?",
+    options:["1,000 words (1:1 ratio)","About 750 words, because tokens are sub-word units averaging ~4 characters each","About 2,000 words, because common phrases are collapsed to single tokens","About 250 words, because each token represents a full sentence"],
+    answer:1, explanation:"Using BPE or SentencePiece, common words are one token; rare words are split into multiple tokens. The rule of thumb is 100 tokens ≈ 75 English words, so 1,000 tokens ≈ 750 words." },
+  { id:82, category:"AI Fundamentals", difficulty:"Intermediate",
+    question:"What is 'transfer learning' and why is it widely used in NLP?",
+    options:["Copying model weights from one server to another","Pre-training on a large general corpus to learn broad representations, then fine-tuning on a smaller task-specific dataset — dramatically reducing labelled data requirements","Transferring data between different storage formats","Training the same model on multiple tasks simultaneously"],
+    answer:1, explanation:"Transfer learning (the foundation of BERT, GPT, etc.) allows a model to leverage vast pre-training knowledge. Fine-tuning on hundreds of labelled examples achieves results that would need millions of examples from scratch." },
+  { id:83, category:"Prompt Engineering", difficulty:"Basic",
+    question:"What is 'zero-shot prompting'?",
+    options:["A prompting technique that uses no system prompt","Asking the model to perform a task without any examples, relying entirely on the model's pre-trained knowledge","Sending a prompt with zero tokens","A technique where the model is allowed zero retries"],
+    answer:1, explanation:"Zero-shot prompting gives only the task description without examples. It works for tasks aligned with pre-training but benefits from few-shot examples for novel or complex tasks." },
+  { id:84, category:"RAG", difficulty:"Basic",
+    question:"In RAG, what problem does 'context stuffing' cause?",
+    options:["Adding too many system instructions to the prompt","Inserting an excessive number of retrieved chunks into the context window, diluting the relevant signal and increasing costs and latency","A technique to compress multiple documents into one chunk","Duplicating context to improve model recall"],
+    answer:1, explanation:"Retrieving too many chunks — even if individually relevant — can overwhelm the model, burying the most relevant information and increasing hallucination risk. Good RAG designs keep retrieved context small and high-quality." },
+  { id:85, category:"AI Governance", difficulty:"Basic",
+    question:"What is the principle of 'human-in-the-loop' (HITL) in AI systems?",
+    options:["Requiring every AI action to be manually coded by a human","Designing AI workflows so humans review, override, or approve AI decisions at critical points, especially for high-stakes outcomes","Replacing human workers with AI in repetitive tasks","Training AI models using only human-generated data"],
+    answer:1, explanation:"HITL ensures accountability by keeping humans in the decision chain. For consequential decisions (loan approval, medical diagnosis, legal filings), human review prevents unchecked AI errors from causing harm." },
+  { id:86, category:"Responsible AI", difficulty:"Basic",
+    question:"What does 'explainable AI' (XAI) aim to achieve?",
+    options:["Making AI models run faster","Providing clear, understandable reasons for AI decisions to stakeholders including affected individuals, regulators, and developers","Reducing the cost of AI model training","Making AI models available as open source"],
+    answer:1, explanation:"XAI tools (SHAP, LIME, attention visualisation) help stakeholders understand why a model made a decision, supporting accountability, debugging, regulatory compliance, and user trust." },
+  { id:87, category:"Vector Databases", difficulty:"Basic",
+    question:"What does 'upsert' mean in vector database operations?",
+    options:["Uploading and encrypting vectors securely","Insert if the ID doesn't exist, or update the existing entry if it does — enabling idempotent vector updates without duplicating entries","Deleting a vector and replacing it with a new one in two steps","Sorting vectors by similarity score"],
+    answer:1, explanation:"Upsert (update + insert) is essential for keeping embeddings current when source documents change, without creating duplicate vectors." },
+  { id:88, category:"Embeddings", difficulty:"Basic",
+    question:"What is 'semantic similarity' and how do embeddings enable it?",
+    options:["Checking whether two texts are identical character-by-character","Measuring how closely related the meaning of two texts is — embeddings enable this by mapping semantically similar texts to nearby points in vector space","Comparing the length of two text strings","Detecting plagiarism by checking common n-grams"],
+    answer:1, explanation:"Embeddings from models like text-embedding-3 or sentence-transformers place similar-meaning texts near each other. Cosine similarity between vectors gives a quantitative semantic similarity score." },
+  { id:89, category:"AI Fundamentals", difficulty:"Advanced",
+    question:"What is the 'bitter lesson' articulated by Rich Sutton?",
+    options:["That AI research is more expensive than it benefits society","Methods leveraging computation at scale (search, learning) consistently outperform methods encoding human knowledge, suggesting general compute-scalable methods should be prioritised","That reinforcement learning is fundamentally superior to supervised learning","That current AI systems will never achieve general intelligence"],
+    answer:1, explanation:"Sutton's 2019 essay argues that history shows methods exploiting general-purpose compute (neural networks + scale) have repeatedly beaten hand-crafted, knowledge-heavy approaches." },
+  { id:90, category:"Responsible AI", difficulty:"Advanced",
+    question:"What is 'value alignment' in the context of advanced AI systems?",
+    options:["Ensuring AI output values are within a numerical range","The challenge of ensuring that an AI system's objectives and behaviour remain consistent with human values and intentions across diverse situations","Aligning financial incentives between AI vendors and enterprise customers","Matching model embeddings to human feedback vectors"],
+    answer:1, explanation:"Value alignment addresses the difficulty of specifying human values precisely enough that an AI optimises for them correctly, avoiding unintended harmful behaviour from misspecified reward functions." },
+  { id:91, category:"AI Security", difficulty:"Advanced",
+    question:"What is 'membership inference attack' against an ML model?",
+    options:["Determining the identity of the developer who trained the model","Determining whether a specific individual's data record was included in a model's training set, posing a privacy risk for sensitive datasets","Counting how many members are in a federated learning network","Inferring the architecture of a model from its outputs"],
+    answer:1, explanation:"Membership inference exploits the observation that models behave slightly differently on training examples versus unseen data. Attackers use this signal to infer whether a particular record was used in training." },
+  { id:92, category:"AI Governance", difficulty:"Advanced",
+    question:"What is 'accountability' as an AI governance principle and how is it operationalised?",
+    options:["Ensuring an AI model can explain its decisions in natural language","Assigning clear ownership of AI systems' outcomes to specific roles — operationalised through model registries, audit trails, incident escalation paths, and sign-off requirements","Making all AI source code publicly available","Requiring all AI decisions to be manually approved"],
+    answer:1, explanation:"Accountability means identifiable humans are responsible for AI outcomes. Practically: maintaining a model registry, logging decisions, defining escalation paths, and conducting regular reviews." },
+  { id:93, category:"Enterprise AI Adoption", difficulty:"Advanced",
+    question:"What is the 'AI ROI measurement' challenge in enterprises?",
+    options:["AI ROI can always be calculated with a simple formula","Measuring AI ROI is complex because benefits include hard-to-quantify gains like faster decision-making, improved quality, risk reduction, and competitive differentiation — not just direct cost savings","AI ROI measurement is only relevant for consumer-facing applications","AI projects do not generate measurable ROI in the first three years"],
+    answer:1, explanation:"AI ROI extends beyond efficiency gains to quality improvements, risk avoidance, speed-to-insight, and strategic positioning. OKRs, balanced scorecards, and pilot A/B tests help capture the full value story." },
+  { id:94, category:"Responsible AI", difficulty:"Intermediate",
+    question:"What is 'AI transparency' and how does it differ from explainability?",
+    options:["Transparency means making model code open source; explainability means using SHAP values","Transparency is openness about how an AI system works at an organisational level (data sources, model choices, limitations, governance); explainability focuses on justifying individual model decisions","They are identical concepts used interchangeably","Transparency is required by law; explainability is optional"],
+    answer:1, explanation:"Transparency is broader — it includes disclosure of training data, intended use, known biases, and governance processes. Explainability is the technical capability to justify individual model outputs. Both are needed for trustworthy AI." },
+  { id:95, category:"Prompt Engineering", difficulty:"Intermediate",
+    question:"What is 'grounding' in a prompt and why does it reduce hallucination?",
+    options:["Connecting the prompt to the internet for real-time search","Providing factual context (retrieved documents, database records, verified facts) directly in the prompt, instructing the model to answer only from that context","Limiting the model to respond only in formal language","Adding disclaimers to every model response"],
+    answer:1, explanation:"Grounded prompts constrain the model to reason from provided evidence rather than relying on parametric memory, which may be outdated or incorrect. Combined with instructions like 'answer only from the context', hallucination rates drop significantly." },
+  { id:96, category:"RAG", difficulty:"Intermediate",
+    question:"What is 'metadata filtering' in a RAG pipeline?",
+    options:["Removing stop words from document chunks before embedding","Using structured attributes (date, author, document type, department) alongside vector search to narrow the retrieval scope to the most relevant subset of documents","Filtering out low-confidence model responses","Removing duplicate chunks from the retrieval results"],
+    answer:1, explanation:"Metadata filtering combines structured constraints with semantic search. For example, 'retrieve only from HR policy documents published after 2022' dramatically improves precision without purely relying on vector similarity." },
+  { id:97, category:"AI Fundamentals", difficulty:"Intermediate",
+    question:"What is 'regularisation' in machine learning and why is it used?",
+    options:["Converting model outputs to a standard format","Techniques (L1, L2, dropout) that penalise model complexity during training to reduce overfitting and improve generalisation to unseen data","A method for normalising input feature scales","Scheduling the learning rate during training"],
+    answer:1, explanation:"Regularisation adds constraints or noise to prevent the model from perfectly memorising training data. L1 induces sparsity; L2 penalises large weights; dropout randomly deactivates neurons during training." },
+  { id:98, category:"LLMs", difficulty:"Intermediate",
+    question:"What is 'instruction tuning' in the context of LLMs?",
+    options:["Tuning the hardware instructions a GPU uses to run the model","Fine-tuning a base language model on a dataset of (instruction, desired output) pairs to make it follow user instructions reliably rather than just predict the next token","Adjusting the model's inference settings in real time","A technique for making the model output structured JSON"],
+    answer:1, explanation:"Instruction tuning (used in InstructGPT, Llama-Instruct, Claude) bridges the gap between base language modelling and instruction following, making models much more useful for chat and task completion." },
+  { id:99, category:"Embeddings", difficulty:"Advanced",
+    question:"What is 'embedding dimensionality reduction' (e.g., using PCA or UMAP) used for in practice?",
+    options:["Making embedding models faster to train","Compressing high-dimensional embeddings (e.g., 1536-dim) to 2D or 3D for visualisation, or to lower dimensions for downstream classifiers, clustering, or storage efficiency","Improving the accuracy of cosine similarity computations","Converting dense embeddings to sparse keyword vectors"],
+    answer:1, explanation:"Techniques like PCA, UMAP, and t-SNE reduce embedding dimensionality for: visual cluster exploration, faster approximate search, lower memory footprint, and feeding embeddings into lightweight ML classifiers." },
+  { id:100, category:"AI Security", difficulty:"Intermediate",
+    question:"What is 'model stealing' (model extraction attack)?",
+    options:["Physically stealing hardware containing model weights","Using repeated API queries to build a functional surrogate model that mimics the target model, bypassing intellectual property protections","Stealing API keys to get free access to a model","Removing a model from a competitor's product listing"],
+    answer:1, explanation:"Attackers query a black-box model extensively, using input-output pairs to train a local replica. This can compromise intellectual property and enable downstream adversarial attacks against the original." }
+];
+
+    QUESTIONS.sort(() => Math.random() - 0.5);
+
+
+    let currentQuestion = 0;
+    let score = 0;
+    let selectedAnswer = null;
+    let timeLeft = 45 * 60;
+
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const feedbackEl = document.getElementById("feedback");
+    const progressEl = document.getElementById("progress");
+    const scoreEl = document.getElementById("score");
+    const timerEl = document.getElementById("timer");
+    const nextBtn = document.getElementById("next-btn");
+    const progressFill = document.getElementById("progress-fill");
+
+    function formatTime(s) {
+      return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+    }
+
+    function startTimer() {
+      const t = setInterval(() => {
+        timerEl.textContent = formatTime(timeLeft);
+        if (timeLeft <= 60) timerEl.classList.add("timer-urgent");
+        timeLeft--;
+        if (timeLeft < 0) { clearInterval(t); showResults(); }
+      }, 1000);
+    }
+
+    function loadQuestion() {
+      selectedAnswer = null;
+      const q = QUESTIONS[currentQuestion];
+      questionEl.textContent = q.question;
+      progressEl.textContent = `${currentQuestion + 1}/${QUESTIONS.length}`;
+      scoreEl.textContent = score;
+      progressFill.style.width = `${((currentQuestion + 1) / QUESTIONS.length) * 100}%`;
+      document.getElementById("q-category").textContent = q.category;
+      document.getElementById("q-difficulty").textContent = q.difficulty;
+      optionsEl.innerHTML = "";
+      feedbackEl.innerHTML = "";
+
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.innerHTML = `<span class="option-letter">${String.fromCharCode(65+i)}</span><span>${opt}</span>`;
+        btn.onclick = () => selectAnswer(i, btn);
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function selectAnswer(index, button) {
+      if (selectedAnswer !== null) return;
+      selectedAnswer = index;
+      const q = QUESTIONS[currentQuestion];
+      const buttons = document.querySelectorAll(".option-btn");
+      buttons.forEach(b => b.disabled = true);
+
+      if (index === q.answer) {
+        button.classList.add("correct");
+        score++;
+        scoreEl.textContent = score;
+        feedbackEl.innerHTML = `
+          <div class="feedback-box correct-feedback">
+            <strong>✓ Correct!</strong>
+            <div class="explanation">${q.explanation}</div>
+          </div>`;
+      } else {
+        button.classList.add("wrong");
+        buttons[q.answer].classList.add("correct");
+        feedbackEl.innerHTML = `
+          <div class="feedback-box wrong-feedback">
+            <strong>✗ Incorrect</strong>
+            <div class="correct-answer">Correct: ${q.options[q.answer]}</div>
+            <div class="explanation">${q.explanation}</div>
+          </div>`;
+      }
+    }
+
+    nextBtn.addEventListener("click", () => {
+      if (selectedAnswer === null) { alert("Please select an answer first."); return; }
+      currentQuestion++;
+      if (currentQuestion < QUESTIONS.length) loadQuestion();
+      else showResults();
+    });
+
+    function showResults() {
+      document.getElementById("quiz-container").classList.add("hidden");
+      document.getElementById("result-container").classList.remove("hidden");
+      const pct = ((score / QUESTIONS.length) * 100).toFixed(1);
+      let level = "Needs Improvement";
+      let badgeClass = "needs-improvement";
+      if (pct >= 85) { level = "Expert"; badgeClass = ""; }
+      else if (pct >= 70) { level = "Proficient"; badgeClass = ""; }
+      else if (pct >= 50) { level = "Intermediate"; badgeClass = "intermediate"; }
+
+      document.getElementById("final-score").textContent = `${score}/${QUESTIONS.length}`;
+      document.getElementById("percentage").textContent = pct;
+      document.getElementById("performance").textContent = level;
+      const badge = document.getElementById("level-badge");
+      badge.textContent = `🏅 ${level}`;
+      badge.className = `level-badge ${badgeClass}`;
+    }
+
+    function restartQuiz() { location.reload(); }
+
+    loadQuestion();
+    startTimer();
+  </script>
+</body>
+</html>
